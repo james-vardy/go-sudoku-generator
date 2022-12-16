@@ -22,16 +22,16 @@ func main() {
 		{9,7,8, 3,1,2, 6,4,5},
 	}
 
-	for i := 0; i < len(board[0]); i++ {
-		fmt.Println(board[i])
-	}
+	board = randomiseBoard(board)
 
-	fmt.Println("\n\n")
-	randomiseBoard(board)
+	board = removeNumbers(board, 50)
 
 	for i := 0; i < len(board[0]); i++ {
 		fmt.Println(board[i])
 	}
+
+	fmt.Println(solve(board, 0, 0))
+
 
 }
 
@@ -53,9 +53,9 @@ func ShuffleNumbers(board [][]int) [][]int {
 	s := rand.NewSource(time.Now().UnixNano())
     r := rand.New(s)
 
-	for i := 0; i < len(board[0]); i++ {
+	for i := 1; i < len(board[0])+1; i++ {
 
-		ranNum := r.Intn(9)
+		ranNum := r.Intn(9)+1
 		board = swapNumbers(board, i, ranNum)
 		
 	}
@@ -186,4 +186,81 @@ func swap3X3Cols(board [][]int, c1 int, c2 int) [][]int {
 
 	return board
 
+}
+
+func removeNumbers(board [][]int, n int) [][]int {
+
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+
+	//n is the number of remaining numbers
+	activeNumbers := len(board[0]) * len(board[0])
+
+	for n < activeNumbers {
+
+		ranRow := r.Intn(9)
+		ranCol := r.Intn(9)
+
+		if (board[ranRow][ranCol] != 0) {
+			board[ranRow][ranCol] = 0
+			activeNumbers--
+		}
+		
+	}
+
+	return board
+
+}
+
+func isValid(board [][]int, r int, c int, k int) bool {
+
+	notInRow := true
+	for i := 0; i < len(board[0]); i++ {
+		if (k == board[r][i]) {
+			notInRow = false
+		}
+	}
+
+	notInCol := true
+	for i := 0; i < len(board[0]); i++ {
+		if (k == board[i][c]) {
+			notInCol = false
+		}
+	}
+
+	notInBox := true
+	for i := (r/3)*3; i < (r/3)*3+3; i++ {
+		for j := (c/3)*3; j < (c/3)*3+3; j++ {
+			if (k == board[i][j]) {
+				notInCol = false
+			}
+		}
+	}
+
+	return (notInRow && notInCol && notInBox)
+
+}
+
+func solve(board [][]int, r int, c int) bool {
+	if (r == 9) {
+		for i := 0; i < len(board[0]); i++ {
+			fmt.Println(board[i])
+		}
+		return true
+	} else if (c == 9) {
+		return solve(board, r+1, 0)
+	} else if (board[r][c] != 0) {
+		return solve(board, r, c+1)
+	} else {
+		for k := 1; k < len(board[0])+1; k++ {
+			if isValid(board, r, c, k) {
+				board[r][c] = k
+				if solve(board, r, c+1) {
+					return true
+				}
+				board[r][c] = 0
+			}
+		}
+		return false
+	}
 }
