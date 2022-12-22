@@ -8,13 +8,13 @@ import (
 
 func main() {
 
-	var board = [][]int{
+	var board = [9][9]int{
 		{1,2,3, 4,5,6, 7,8,9},
 		{4,5,6, 7,8,9, 1,2,3},
 		{7,8,9, 1,2,3, 4,5,6},
 
 		{2,3,1, 5,6,4, 8,9,7},
-		{5,6,4, 7,8,9, 2,3,1},
+		{5,6,4, 8,9,7, 2,3,1},
 		{8,9,7, 2,3,1, 5,6,4},
 
 		{3,1,2, 6,4,5, 9,7,8},
@@ -23,19 +23,24 @@ func main() {
 	}
 
 	board = randomiseBoard(board)
-
-	board = removeNumbers(board, 50)
-
-	for i := 0; i < len(board[0]); i++ {
-		fmt.Println(board[i])
+	board = removeNumbers(board, 20)
+	
+	fmt.Printf("\n")
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			if (board[i][j] == 0) {
+				fmt.Printf(".")
+			} else {
+				fmt.Printf("%d", board[i][j])
+			}
+		}
 	}
-
-	fmt.Println(solve(board, 0, 0))
+	fmt.Printf("\n")
 
 
 }
 
-func randomiseBoard(board [][]int) [][]int {
+func randomiseBoard(board [9][9]int) [9][9]int {
 
 	board = ShuffleNumbers(board)
 	board = ShuffleRows(board)
@@ -47,7 +52,7 @@ func randomiseBoard(board [][]int) [][]int {
 
 }
 
-func ShuffleNumbers(board [][]int) [][]int {
+func ShuffleNumbers(board [9][9]int) [9][9]int {
 
 	//seed rand
 	s := rand.NewSource(time.Now().UnixNano())
@@ -64,7 +69,7 @@ func ShuffleNumbers(board [][]int) [][]int {
 
 }
 
-func swapNumbers(board [][]int, n1 int, n2 int) [][]int {
+func swapNumbers(board [9][9]int, n1 int, n2 int) [9][9]int {
 
 	for y := 0; y < len(board[0]); y++ {
 		for x := 0; x < len(board[0]); x++ {
@@ -80,7 +85,7 @@ func swapNumbers(board [][]int, n1 int, n2 int) [][]int {
 
 }
 
-func ShuffleRows(board [][]int) [][]int {
+func ShuffleRows(board [9][9]int) [9][9]int {
 
 	//seed rand
 	s := rand.NewSource(time.Now().UnixNano())
@@ -98,7 +103,7 @@ func ShuffleRows(board [][]int) [][]int {
 
 }
 
-func swapRows(board [][]int, r1 int, r2 int) [][]int {
+func swapRows(board [9][9]int, r1 int, r2 int) [9][9]int {
 
 	row := board[r1]
 	board[r1] = board[r2]
@@ -109,7 +114,7 @@ func swapRows(board [][]int, r1 int, r2 int) [][]int {
 }
 
 
-func ShuffleCols(board [][]int) [][]int {
+func ShuffleCols(board [9][9]int) [9][9]int {
 
 	//seed rand
 	s := rand.NewSource(time.Now().UnixNano())
@@ -127,7 +132,7 @@ func ShuffleCols(board [][]int) [][]int {
 
 }
 
-func swapCols(board [][]int, c1 int, c2 int) [][]int {
+func swapCols(board [9][9]int, c1 int, c2 int) [9][9]int {
 
 	var colVal int;
 	for i := 0; i < len(board[0]); i++ {
@@ -140,7 +145,7 @@ func swapCols(board [][]int, c1 int, c2 int) [][]int {
 
 }
 
-func Shuffle3X3Rows(board [][]int) [][]int {
+func Shuffle3X3Rows(board [9][9]int) [9][9]int {
 
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
@@ -154,7 +159,7 @@ func Shuffle3X3Rows(board [][]int) [][]int {
 
 }
 
-func swap3X3Rows(board [][]int, r1 int, r2 int) [][]int {
+func swap3X3Rows(board [9][9]int, r1 int, r2 int) [9][9]int {
 
 	for i := 0; i < len(board[0])/3; i++ {
 		board = swapCols(board, r1 * 3 + i, r2 * 3 + i);
@@ -164,7 +169,7 @@ func swap3X3Rows(board [][]int, r1 int, r2 int) [][]int {
 
 }
 
-func Shuffle3X3Cols(board [][]int) [][]int {
+func Shuffle3X3Cols(board [9][9]int) [9][9]int {
 
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
@@ -178,7 +183,7 @@ func Shuffle3X3Cols(board [][]int) [][]int {
 
 }
 
-func swap3X3Cols(board [][]int, c1 int, c2 int) [][]int {
+func swap3X3Cols(board [9][9]int, c1 int, c2 int) [9][9]int {
 
 	for i := 0; i < len(board[0])/3; i++ {
 		board = swapCols(board, c1 * 3 + i, c2 * 3 + i);
@@ -188,7 +193,7 @@ func swap3X3Cols(board [][]int, c1 int, c2 int) [][]int {
 
 }
 
-func removeNumbers(board [][]int, n int) [][]int {
+func removeNumbers(board [9][9]int, n int) [9][9]int {
 
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
@@ -201,11 +206,31 @@ func removeNumbers(board [][]int, n int) [][]int {
 		ranRow := r.Intn(9)
 		ranCol := r.Intn(9)
 
+		uniqueFlag := true
+
 		if (board[ranRow][ranCol] != 0) {
 			var temp = board[ranRow][ranCol]
 			board[ranRow][ranCol] = 0
-			if solve(board, 0, 0) {
-				activeNumbers--
+			if (solve(board, 0, 0)) {
+
+				for i := 1; i < 10; i++ {
+					if (temp != i) {
+						if (isValid(board, ranRow, ranCol, i)) {
+							board[ranRow][ranCol] = i
+							if (solve(board, 0, 0)) {
+								uniqueFlag = false
+							}
+						}
+					}
+				}
+
+				if uniqueFlag {
+					activeNumbers--
+					board[ranRow][ranCol] = 0
+				} else {
+					board[ranRow][ranCol] = temp
+				}
+				
 			} else {
 				board[ranRow][ranCol] = temp
 			}
@@ -217,7 +242,7 @@ func removeNumbers(board [][]int, n int) [][]int {
 
 }
 
-func isValid(board [][]int, r int, c int, k int) bool {
+func isValid(board [9][9]int, r int, c int, k int) bool {
 
 	notInRow := true
 	for i := 0; i < len(board[0]); i++ {
@@ -246,7 +271,7 @@ func isValid(board [][]int, r int, c int, k int) bool {
 
 }
 
-func solve(board [][]int, r int, c int) bool {
+func solve(board [9][9]int, r int, c int) bool {
 	if (r == 9) {
 		return true
 	} else if (c == 9) {
