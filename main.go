@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math/rand"
 	"time"
 )
+
+var solvedBoardForward [9][9]int
+var solvedBoardBackward [9][9]int
 
 func main() {
 
@@ -23,19 +28,8 @@ func main() {
 	}
 
 	board = randomiseBoard(board)
-	board = removeNumbers(board, 20)
-
-	fmt.Printf("\n")
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			if board[i][j] == 0 {
-				fmt.Printf(".")
-			} else {
-				fmt.Printf("%d", board[i][j])
-			}
-		}
-	}
-	fmt.Printf("\n")
+	board = removeNumbers(board, 26)
+	printBoard(board, 0)
 
 }
 
@@ -191,7 +185,16 @@ func swap3X3Cols(board [9][9]int, c1 int, c2 int) [9][9]int {
 
 }
 
+func sliceCopy(in, out interface{}) {
+	buf := new(bytes.Buffer)
+	gob.NewEncoder(buf).Encode(in)
+	gob.NewDecoder(buf).Decode(out)
+}
+
 func removeNumbers(board [9][9]int, n int) [9][9]int {
+
+	var backupBoard [9][9]int
+	sliceCopy(board, backupBoard)
 
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
@@ -201,43 +204,63 @@ func removeNumbers(board [9][9]int, n int) [9][9]int {
 
 	for n < activeNumbers {
 
-		ranRow := r.Intn(9)
-		ranCol := r.Intn(9)
+		// 0 if cell untested, 1 if tested
+		var testedMap = [9][9]int{
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
 
-		uniqueFlag := true
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
 
-		if board[ranRow][ranCol] != 0 {
-			var temp = board[ranRow][ranCol]
-			board[ranRow][ranCol] = 0
-			if solve(board, 0, 0) {
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
 
-				for i := 1; i < 10; i++ {
-					if temp != i {
-						if isValid(board, ranRow, ranCol, i) {
-							board[ranRow][ranCol] = i
-							if solve(board, 0, 0) {
-								uniqueFlag = false
-							}
-						}
+		var completeMap = [9][9]int{
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+			{1, 1, 1, 1, 1, 1, 1, 1, 1},
+		}
+
+		for n < activeNumbers {
+
+			ranRow := r.Intn(9)
+			ranCol := r.Intn(9)
+
+			if testedMap == completeMap {
+				return removeNumbers(backupBoard, n)
+			}
+
+			if board[ranRow][ranCol] != 0 {
+				var temp = board[ranRow][ranCol]
+				board[ranRow][ranCol] = 0
+				if isSolvable(board, 0, 0) && isSolvableReverse(board, 0, 0) {
+					if solvedBoardForward == solvedBoardBackward {
+						activeNumbers--
+					} else {
+						board[ranRow][ranCol] = temp
 					}
-				}
-
-				if uniqueFlag {
-					activeNumbers--
-					board[ranRow][ranCol] = 0
 				} else {
 					board[ranRow][ranCol] = temp
 				}
-
-			} else {
-				board[ranRow][ranCol] = temp
+				testedMap[ranRow][ranCol] = 1
 			}
+
 		}
 
 	}
-
 	return board
-
 }
 
 func isValid(board [9][9]int, r int, c int, k int) bool {
@@ -269,18 +292,19 @@ func isValid(board [9][9]int, r int, c int, k int) bool {
 
 }
 
-func solve(board [9][9]int, r int, c int) bool {
+func isSolvable(board [9][9]int, r int, c int) bool {
 	if r == 9 {
+		solvedBoardForward = board
 		return true
 	} else if c == 9 {
-		return solve(board, r+1, 0)
+		return isSolvable(board, r+1, 0)
 	} else if board[r][c] != 0 {
-		return solve(board, r, c+1)
+		return isSolvable(board, r, c+1)
 	} else {
 		for k := 1; k < len(board[0])+1; k++ {
 			if isValid(board, r, c, k) {
 				board[r][c] = k
-				if solve(board, r, c+1) {
+				if isSolvable(board, r, c+1) {
 					return true
 				}
 				board[r][c] = 0
@@ -288,4 +312,60 @@ func solve(board [9][9]int, r int, c int) bool {
 		}
 		return false
 	}
+}
+
+func isSolvableReverse(board [9][9]int, r int, c int) bool {
+	if r == 9 {
+		solvedBoardBackward = board
+		return true
+	} else if c == 9 {
+		return isSolvableReverse(board, r+1, 0)
+	} else if board[r][c] != 0 {
+		return isSolvableReverse(board, r, c+1)
+	} else {
+		for k := len(board[0]); k > 0; k-- {
+			if isValid(board, r, c, k) {
+				board[r][c] = k
+				if isSolvableReverse(board, r, c+1) {
+					return true
+				}
+				board[r][c] = 0
+			}
+		}
+		return false
+	}
+}
+
+func printBoard(board [9][9]int, flag int) {
+	//takes board, flag 0 prints sudoku string, flag 1 prints a terminal sudoku
+
+	if flag == 0 {
+		fmt.Printf("\n")
+		for i := 0; i < 9; i++ {
+			for j := 0; j < 9; j++ {
+				if board[i][j] == 0 {
+					fmt.Printf(".")
+				} else {
+					fmt.Printf("%d", board[i][j])
+				}
+			}
+		}
+		fmt.Printf("\n")
+	}
+
+	if flag == 1 {
+		fmt.Printf("\n")
+		for i := 0; i < 9; i++ {
+			for j := 0; j < 9; j++ {
+				if board[i][j] == 0 {
+					fmt.Printf("0")
+				} else {
+					fmt.Printf("%d", board[i][j])
+				}
+			}
+			fmt.Printf("\n")
+		}
+		fmt.Printf("\n")
+	}
+
 }
